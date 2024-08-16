@@ -1,0 +1,7 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "funCity:lib"
+
+    - path: "./test"
+      component: "funCity:test:funCity-test"
