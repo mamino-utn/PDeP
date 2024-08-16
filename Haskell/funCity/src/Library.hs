@@ -45,20 +45,24 @@ ciudadNombreRaro = ((<5) . length . nombre)
 sumaAlCostoDeVidad :: Ciudad -> Number -> Number
 sumaAlCostoDeVidad ciudad costo  = costoDeVida ciudad + ((costo/100) * costoDeVida ciudad)
 
-sumaAlCostoDeVidad' :: Number -> Ciudad -> Ciudad
+sumaAlCostoDeVidad' :: Number -> Evento
 sumaAlCostoDeVidad' costo ciudad = ciudad {
     costoDeVida = costoDeVida ciudad + ((costo/100) * costoDeVida ciudad)
 }
 
+
+type Evento = Ciudad->Ciudad
+
+
 --Grupal
 
-sumarNuevaAtraccion  :: String -> Ciudad -> Ciudad
+sumarNuevaAtraccion  :: String -> Evento
 sumarNuevaAtraccion nuevaAtraccion ciudad = sumaAlCostoDeVidad' 20 ciudad {
     atracciones = nuevaAtraccion:atracciones ciudad
 }
 
 --Integrante 1
-crisis :: Ciudad -> Ciudad
+crisis :: Evento
 crisis ciudad = ciudad{
     atracciones= (quitarUltimoElemento . atracciones) ciudad,
     costoDeVida = sumaAlCostoDeVidad ciudad (-10)
@@ -69,7 +73,7 @@ quitarUltimoElemento [] = []
 quitarUltimoElemento lista = init lista
 
 --Integrante 2
-remodelacionCiudad:: Number -> Ciudad -> Ciudad
+remodelacionCiudad:: Number -> Evento
 remodelacionCiudad costoRemodelacion ciudad  = ciudad{
     nombre= "New " ++ nombre ciudad,
     costoDeVida = sumaAlCostoDeVidad ciudad costoRemodelacion
@@ -78,7 +82,7 @@ remodelacionCiudad costoRemodelacion ciudad  = ciudad{
 
 --Integrante 3
 
-reevaluacionCiudad :: Number -> Ciudad -> Ciudad
+reevaluacionCiudad :: Number -> Evento
 reevaluacionCiudad cantidadLetras ciudad
     | ciudadSobria cantidadLetras ciudad = ciudad{costoDeVida = sumaAlCostoDeVidad ciudad 10}
     | otherwise                          = ciudad{costoDeVida = costoDeVida ciudad - 3}
@@ -108,25 +112,128 @@ reevaluacionCiudad cantidadLetras ciudad
 
 --(reevaluacionCiudad 10.crisis.remodelacionCiudad 50.sumarNuevaAtraccion "buenos aires") ciudad
 
----- Parte 2
 
-type Evento = Ciudad -> Ciudad
 
-data Anio = Anio {
-   anio :: Number,
-   eventos :: [Evento]
-} deriving (Show, Eq)
+-- Segunda entrega
 
-pasoDeAnio :: Ciudad -> Anio -> Ciudad
-pasoDeAnio ciudad anio = foldr ($) ciudad (eventos anio)
+  -- Punto 1
 
-type CriterioComparacion = Ciudad -> Ciudad -> Bool
+    -- 1
 
-comparacionCostoVida :: CriterioComparacion
-comparacionCostoVida  ciudad ciudadConEvento = costoDeVida ciudad < costoDeVida ciudadConEvento
+type Anio = (Number,[Evento])
 
-comparacionAtracciones :: CriterioComparacion
-comparacionAtracciones ciudad ciudadConEvento = (length.atracciones) ciudad < (length.atracciones) ciudadConEvento
+eventos :: Anio -> [Evento]
+eventos = snd
 
-algoMejor :: Ciudad -> CriterioComparacion-> Evento -> Bool
-algoMejor ciudad criterioComparacion evento = criterioComparacion ciudad (evento ciudad)
+aniosPasan ::Ciudad->Anio->Ciudad
+aniosPasan ciudad   = foldr  ($) ciudad . eventos
+
+    -- 2
+
+type Criterio = Ciudad -> Number
+
+compararCostoVida :: Criterio
+compararCostoVida   = costoDeVida
+
+compararAtracciones :: Criterio
+compararAtracciones = (length.atracciones)
+
+algoMejor :: Ciudad->Criterio->Evento->Bool
+algoMejor ciudad criterio evento = criterio ciudad < criterio (evento ciudad)
+
+
+aplicarEventosFiltradosPorCriterio :: Criterio -> Ciudad -> Anio -> Ciudad
+aplicarEventosFiltradosPorCriterio criterio ciudad = foldr ($) ciudad . filtrarEventosDeUnAnioSegunCriterio ciudad criterio
+
+filtrarEventosDeUnAnioSegunCriterio :: Ciudad -> Criterio -> Anio -> [Evento]
+filtrarEventosDeUnAnioSegunCriterio ciudad criterio  = filter (algoMejor ciudad criterio). eventos
+-- Integrante 1
+-- 1.3
+costoDeVidaSube :: Ciudad -> Anio -> Ciudad
+costoDeVidaSube = aplicarEventosFiltradosPorCriterio costoDeVida --(foldr ($) ciudad . filter (algoMejor ciudad costoDeVida)) (snd anio)
+
+--Integrante 2 Punto 1.4
+bajenElCostoDeVida :: Ciudad -> Anio -> Ciudad
+bajenElCostoDeVida = aplicarEventosFiltradosPorCriterio (negate.costoDeVida)--(foldr ($) ciudad . filter(not.algoMejor ciudad compararCostoVida)) (snd anio)
+
+--Integrante 3 
+-- 1.5
+
+valorQueSuba :: Ciudad -> Anio -> Ciudad
+valorQueSuba = aplicarEventosFiltradosPorCriterio valorDeCiudad --(foldr ($) ciudad . filter(valorMayor ciudad)) (snd anio)
+
+-- valorMayor :: Ciudad -> Evento -> Bool
+-- valorMayor ciudad evento = valorDeCiudad ciudad < valorDeCiudad (evento ciudad)
+
+
+-- Punto 2 Funciones a la orden
+
+-- 2.1 integrante 1
+eventosOrdenados:: Anio -> Ciudad -> Bool
+eventosOrdenados (_,[_]) _ = True
+eventosOrdenados (fundacion,evento1:evento2:eventos) ciudad = mejorDeDos costoDeVida ciudad evento1 evento2 && eventosOrdenados (fundacion,evento2:eventos) ciudad
+
+mejorDeDos :: Criterio -> Ciudad-> Evento -> Evento ->Bool
+mejorDeDos criterio  ciudad evento1 evento2 =  (criterio.evento1) ciudad <= (criterio.evento2) ciudad 
+
+
+-- 2.2 integrante 2
+-- azul = Ciudad{nombre="Azul",aniofundacion=1832,atracciones=["Atraccion1"],costoDeVida= 190}
+nullish = Ciudad{nombre="Nullish",aniofundacion=1800,atracciones=["Atraccion1"],costoDeVida=140}
+caleta = Ciudad{nombre="Caleta",aniofundacion=1900,atracciones=["Atraccion1"],costoDeVida=120}
+baradero = Ciudad{nombre="Baradero",aniofundacion=1832,atracciones=["Atraccion1"],costoDeVida=150}
+
+ciudadesOrdenadas:: Evento -> [Ciudad] -> Bool
+ciudadesOrdenadas _ [_] = True
+ciudadesOrdenadas evento (ciudad:otraCiudad:ciudades) =
+    (costoDeVida.evento) ciudad < (costoDeVida.evento) otraCiudad && ciudadesOrdenadas evento (otraCiudad:ciudades)
+
+
+-- 2.3 integrante 3
+
+aniosOrdenados :: [Anio] -> Ciudad -> Bool
+aniosOrdenados [_] _ = True
+aniosOrdenados (anio1:anio2:anios) ciudad = (costoDeVida.aniosPasan ciudad) anio1 < (costoDeVida.aniosPasan ciudad) anio2 && aniosOrdenados (anio2:anios) ciudad
+
+-- Punto 3
+
+-- Integrante 1
+
+xs=(2024,[crisis, reevaluacionCiudad 7]++ map remodelacionCiudad [1..])
+
+
+-- 2024 = (2024,[crisis, reevaluacionCiudad 7, remodelacionCiudad 1, remodelacionCiudad 2...])
+-- el unico caso donde se podria obtener un resultado seria si la reevaluacionCiudad da un baja en el costo de vida, para eso la ciudad no tendria que ser sobria,
+-- ya que por el lazy evaluation al encontrar un false en una cadena eterna de and, ya sabe que el resultado solo puede ser false, en caso contrario va a estar  toda la eternidad,
+-- chequeando si son todos true, y al ir en aumento la remodelacion siempre lo va a ser
+
+{- Integrante 2
+
+  Opcion 1:
+  ciudadesInfinitas :: [Ciudad]
+  ciudadesInfinitas = caleta:baradero:ciudadesInfinitas
+
+  discoRayado = [azul,nullish] ++ ciudadesInfinitas 
+  
+  Opcion 2:
+  discoRayado = [azul,nullish] ++ cycle [caleta,baradero]
+  
+  Puede haber un resultado posible para la función del punto 2.2 (ciudades ordenadas) para la lista 
+  “disco rayado”? Justificarlo relacionándolo con conceptos vistos en la materia.
+
+  Si hay un resultado posible y es false, esto es posible por lazy evaluation,
+  ya que si al comparar el costo de vidad de dos ciudades, da false, no seguira comparando el resto de la lista.
+-}
+
+-- Integrante 3
+{-
+    Si , el unico resultado posible es "False" , ya que la funcion "aniosOrdenados" ira recibiendo anios en la lista
+    de anios y cuando vea que el "&&" tiene un false entonces dejara de ejecutar la recursividad y dara como resultado
+    "false". 
+    
+    Esto solo ocurre cuando un anio de la lista hace que el costo de vida de la ciudad no sea mayor al del evento del anio anterior.
+
+    False &&  _  =  False
+    True  &&  _  =  _
+
+-}
