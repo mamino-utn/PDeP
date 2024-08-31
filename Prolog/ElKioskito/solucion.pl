@@ -69,3 +69,19 @@ combinaciones([Persona | PersonasPosibles],[Persona | Personas]):-
 
 % fiandall predicado de orden superior que genera una lista de soluciones posibles a partir de satisfacer otro predicado
 % recursividad llamadas recursivas de un predicado y mecanismo de backtracking de prolog que permite buscar/encontrar todas las soluciones posibles
+
+% Punto 5
+%venta(Empleado,Fecha,Productos).
+venta(dodain,fecha(10,8),[golosinas(1200),cigarillos(joyckey),golosinas(50)]).
+venta(dodain,fecha(12,8),[bebidas(true,8),bebidas(false,1),golosinas(10)]).
+venta(martu,fecha(12,8),[golosinas(1000),cigarillos([chesterfield,colorado,parisiennes])]).
+venta(lucas,fecha(11,8),[golosinas(600)]).
+venta(lucas,fecha(18,8),[bebidas(false,2),cigarillos(derby)]).
+
+suertudo(Persona):- venta(Persona,_,_),
+    forall(venta(Persona,_,[Venta|_]),ventaImportante(Venta)).
+
+ventaImportante(golosinas(Precio)):- Precio > 100.
+ventaImportante(cigarillos(Vendidos)):- length(Vendidos, Cantidad), Cantidad > 2.
+ventaImportante(bebidas(true,_)).
+ventaImportante(bebidas(_,Cantidad)):- Cantidad > 5.
