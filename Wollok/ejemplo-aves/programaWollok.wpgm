@@ -1,0 +1,3 @@
+program helloWord {
+    console.println("Hola Mundo!")
+}
