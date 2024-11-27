@@ -381,3 +381,123 @@ describe "Tests de Camino de Rohan" {
     assert.throwsExceptionWithMessage("Falta poder para pasar este camino",{rohan.pasarCamino(gimli)})
   }
 }
+
+// Entrega 3
+
+// Integrante 1 - Matias
+describe "Test de Enfrentamientos" {
+
+    const atacante = new Raza(vida = 100)
+    const enemigo = new Raza(vida = 100)
+  test "Ambos guerrero tienen vida y se producen daño" {
+    atacante.enfrentarA(enemigo)
+    assert.that(atacante.vida()<100)
+    assert.that(enemigo.vida()<100)
+  }
+
+  test "Si un guerro no tiene vida no se produce enfrentamiento"{
+    atacante.vida(0)
+    atacante.enfrentarA(enemigo)
+    assert.equals(100,enemigo.vida())
+  }
+
+  test "Un guerrero con vida produce daño"{
+    atacante.vida(100)
+    assert.that(atacante.producirDanio()>0)
+  }
+
+  test "Un guerrero sin vida no produce daño" {
+    atacante.vida(0)
+    assert.equals(0,atacante.producirDanio())
+  }
+
+}
+
+
+describe "Tests de Tacticas"{
+
+    const guerreroAgil = new Humano (vida = 100,armas = [new Daga (multiplicadorDePoder=2,magiaQueRige=magiaElfica)])
+
+    const guerreroResistente = new Humano(vida =100, armas=[new Espada(multiplicadorDePoder=1,magiaQueRige=magiaElfica)],tactica = tacticaDeResistencia)
+
+    const guerreroCaruso = new Humano(vida =100, armas=[new Espada(multiplicadorDePoder=1,magiaQueRige=magiaElfica)],tactica = new TacticaCaruso(umbralDeEnergia=200))
+
+    const guerreroCuatroTresTres = new Humano(vida =100, armas=[new Espada(multiplicadorDePoder=1,magiaQueRige=magiaElfica)],tactica = tacticaCuatroTresTres)
+
+  test "Una tactica agil suma 100 al poder de un guerrero" { 
+    assert.equals(guerreroAgil.producirDanio(),(guerreroAgil.nivelDePoder()+100)*0.1)
+  }
+
+  /*test "Guerrero agil ataca primero a otro guerrero y este devuelve el ataque"{
+    guerreroAgil.enfrentarA(guerreroCaruso)
+    assert.equals(74,guerreroCaruso.vida())
+    assert.equals(86.86,guerreroAgil.vida())
+  }*/
+
+  test "Un guerrero con tactica de resistencia sufre la mitad del ataque"{
+    guerreroResistente.enfrentarA(guerreroAgil)
+    assert.equals(87,guerreroResistente.vida())
+  }
+
+  test "Un guerrero con las tacticas de caruso recibe daño al huir de un enemigo que supero su umbral "{
+    const guerrero = object inherits Humano(vida=100){override method nivelDePoder()=300}
+    guerreroCaruso.enfrentarA(guerrero)
+    assert.equals(90, guerreroCaruso.vida())
+  }
+
+    test "Un guerrero con las tacticas de caruso se enfrenta a un enemigo que no supero el umbral "{
+    guerreroCaruso.enfrentarA(guerreroAgil)
+    assert.equals(84, guerreroAgil.vida()) // El guerrero que empezo el enfrentamiento ataca primero 
+    assert.equals(75.76,guerreroCaruso.vida()) // El guerrero defensor ataca despues y al perder vida produce menos daño
+  }
+
+  test "Un guerrero que usa la tactica CuatroTresTres produce el doble de daño"{
+     guerreroCuatroTresTres.enfrentarA(guerreroAgil)
+     assert.equals(68, guerreroAgil.vida())
+  }
+
+    test "Un guerrero que usa la tactica CuatroTresTres y mas de 60 de vida, evade el ataque "{
+     guerreroCuatroTresTres.enfrentarA(guerreroAgil)
+     assert.equals(100, guerreroCuatroTresTres.vida())
+  }
+}
+
+describe "Test de Anillos" {
+
+    const legolas = new Elfo(vida=70,armas=[new Daga(magiaQueRige=magiaElfica,multiplicadorDePoder=10)], tactica=tacticaCuatroTresTres)
+    const pipin = new Hobbit(vida=60,armas=[new Espada(magiaQueRige=magiaElfica,multiplicadorDePoder=10)], tactica=tacticaAgil)
+    const thorin = new Enanos(vida=50,armas=[new Espada(magiaQueRige=magiaElfica,multiplicadorDePoder=10)], factorDePoder=1, tactica=tacticaDeResistencia)
+
+    
+    test "Anillo de Fuego" {
+      const anilloDeFuego = new AnilloDeFuego(duenio=pipin,archienemigo=legolas)
+      anilloDeFuego.invocarAnillo()
+      assert.equals(100, pipin.vida())  
+      assert.equals(50, legolas.vida()) 
+    }
+
+    test "Anillo Maldito" {
+      const anilloMaldito = new AnilloMaldito(duenio=thorin)
+      const armaPoderosaDeThorin = thorin.armaMasPoderosa()
+      anilloMaldito.invocarAnillo()
+      assert.notThat(thorin.armas().contains(armaPoderosaDeThorin))
+    }
+
+    test "Anillo de Aire" {
+      const anilloDeAire = new AnilloDeAire(duenio=thorin,mejorAmigo=legolas)
+      anilloDeAire.invocarAnillo()
+      assert.equals(100, legolas.vida())  
+    }
+
+    test "Anillo Unico con muchas armas" {
+      gollum.armas([baculo,new Daga(magiaQueRige=magiaElfica,multiplicadorDePoder=10),new Daga(magiaQueRige=magiaElfica,multiplicadorDePoder=5),new Espada(magiaQueRige=magiaElfica,multiplicadorDePoder=10)])
+      anilloUnico.invocarAnillo()
+      assert.equals(80, gollum.vida())
+    }
+
+    test "Un guerrero invoca un anillo unico, teniendo pocas armas" {
+      anilloUnico.invocarAnillo() 
+      anilloUnico.invocarAnillo() 
+      assert.equals(70, gollum.vida()) 
+    }
+ }

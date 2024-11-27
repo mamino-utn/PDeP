@@ -115,7 +115,7 @@ object minasTirith{
   }
 
   method aplicarConsecuencias(guerrero) {
-    guerrero.modificarVida( (guerrero.cantidadDeArmas() * 10)*-1)
+    guerrero.curarGuerrero( (guerrero.cantidadDeArmas() * 10)*-1)
     
   }
 }
@@ -130,7 +130,7 @@ object lossarnach {
   } 
 
   method aplicarConsecuencias(guerrero) {
-    guerrero.modificarVida((guerrero.cantidadDeArmas() * 2))
+    guerrero.curarGuerrero((guerrero.cantidadDeArmas() * 2))
     } 
   }
 
@@ -237,21 +237,6 @@ class MaderaLuduenica inherits MaderaRuberoica {
 
 // Grupal 
 
-class Raza {
-  var property vida
-  var property armas = []
-
-  method cantidadDeArmas() = armas.size()
-  method tienePocaVida() = vida < 10  
-  method nivelDePoder () = (vida * self.factorMultiplicador()) + self.sumatoriaDePoderArmas() * 2
-  method factorMultiplicador() = 1
-  method sumatoriaDePoderArmas() = armas.sum({arma => arma.unidadesDePoder(self)})
-
-  method modificarVida(modificacion){
-    vida += modificacion 
-  } 
-}
-
 class Maiar inherits Raza {
   override method factorMultiplicador() = if (self.tienePocaVida()) 200 else 15
 }
@@ -264,11 +249,10 @@ object gollum inherits Hobbit(vida=100){
 
 class Hobbit inherits Raza {}
 
-
 class Elfo inherits Raza {
   var property posilloMagico=self.randomPosillo()
 
-  method randomPosillo() = 1000.randomUpTo(5000)
+  method randomPosillo()= 1000.randomUpTo(5000)
   
 
   override method nivelDePoder()= posilloMagico/2
@@ -289,7 +273,7 @@ class Humano inherits Raza {
 
   override method factorMultiplicador() = 1.1 ** self.cantidadDeArmas()
 
-  override method nivelDePoder() = self.vida() * self.factorMultiplicador() + self.sumatoriaDePoderArmas() * 2
+  //override method nivelDePoder() = self.vida() * self.factorMultiplicador() + self.sumatoriaDePoderArmas() * 2
 
 }
 
@@ -315,7 +299,7 @@ class Zona {
   method puedePasar(guerrero) = guerrero.nivelDePoder() > poderRequerido
 
   method aplicarConsecuencias(guerrero) {
-    guerrero.modificarVida(penalizacion*-1)
+    guerrero.curarGuerrero(penalizacion*-1)
   }  
 }
 
@@ -347,3 +331,139 @@ const gondor = new Camino(zonaDeSalida=lebennin,zonaDeLlegada=minasTirith,camino
 Se evaluan sobre los guerreros de la siguiente forma:
 rohan.pasarCamino(guerrero) // le mandamos un mensaje a rohan si un determinado guerrero puede pasar
 */
+
+// Entrega 3
+
+// Integrante 1
+
+class Raza {
+  var property vida
+  var property archienemigo = null
+  var property armas = []
+  var property tactica = tacticaAgil
+
+  method cantidadDeArmas() = armas.size()
+  method tienePocaVida() = vida < 10  
+  method tieneVida() = vida > 0 
+  method nivelDePoder () = (vida * self.factorMultiplicador()) + self.sumatoriaDePoderArmas() * 2 
+  method factorMultiplicador() = 1
+  method sumatoriaDePoderArmas() = armas.sum({arma => arma.unidadesDePoder(self)})
+  method armaMasPoderosa() = armas.max({arma => arma.unidadesDePoder(self)})
+  method quitarArmaMasPoderosa() {
+    armas = armas.filter({arma => arma != self.armaMasPoderosa()})
+  }
+
+  method curarGuerrero(modificacion){
+    vida += modificacion 
+  }  
+
+  // Se produce un enfrentamiento cuando ambos tienen vida 
+  method enfrentarA(oponente) {
+    if (self.tieneVida() and oponente.tieneVida()) tactica.formaDeAtaque(self,oponente) 
+  }
+
+  // Un guerrero produce daño si tiene vida 
+  method producirDanio() = if(self.tieneVida()) (self.nivelDePoder()+tactica.extra())*0.1 else 0
+
+  // Metodo para quitar vida
+  method recibirDanio(danio) {
+    vida -=danio
+  }
+}
+
+class Tactica {
+
+  // Templete method para el daño extra que tienen las tacticas
+  method extra() = 0
+  
+  // Forma el la que se producen los daños segun las tacticas
+  method formaDeAtaque(atacante,defensor) {
+    defensor.recibirDanio(atacante.producirDanio())
+    atacante.recibirDanio(defensor.producirDanio())
+  }
+  
+}
+
+object tacticaAgil inherits Tactica{
+  override method extra() = 100 // Una tactica agil suma 100 al poder de un guerrero
+}
+
+object tacticaDeResistencia inherits Tactica{
+
+  override method formaDeAtaque(atacante,defensor) {
+    // Un guerrero resistente recibe primero el ataque y lo recibe a la mitad 
+    atacante.recibirDanio(defensor.producirDanio()/2) 
+    defensor.recibirDanio(atacante.producirDanio())
+  }
+
+}
+
+class TacticaCaruso inherits Tactica {
+
+  // La tactica caruso tiene como estado el umbralDeEnergia para saber cuando huir
+  var property umbralDeEnergia = 0
+
+  // Si el enemigo supera el umbralDeEnergia huyo pero sufro 10 de daño y si no se produce combate normal
+  override method formaDeAtaque(atacante,defensor) {
+    
+    if(defensor.nivelDePoder() > umbralDeEnergia) atacante.recibirDanio(10) else super(atacante,defensor)
+    
+  }
+   
+}
+
+object tacticaCuatroTresTres inherits Tactica {
+  override method formaDeAtaque(atacante,defensor){
+    defensor.recibirDanio(atacante.producirDanio()*2) // Esta tactica produce un doble ataque por lo tanto es doble daño
+    if(atacante.vida()>60) atacante.recibirDanio(0) else atacante.recibirDanio(defensor.producirDanio()) // Si tengo mas de 60 de vida no sufro danio 
+  }
+}
+
+// Integrante 3
+class Anillo {
+  var property duenio
+  
+  method invocarAnillo() {
+    duenio.vida(100.min(duenio.vida() * 2))
+  }
+}
+
+class AnilloDeFuego inherits Anillo {
+  var property archienemigo
+
+  override method invocarAnillo() {
+    super()
+
+    archienemigo.recibirDanio(20)
+  }
+}
+
+class AnilloMaldito inherits Anillo {
+  override method invocarAnillo() {
+    super()
+
+    duenio.quitarArmaMasPoderosa()
+  }
+}
+
+class AnilloDeAire inherits Anillo {
+  var property mejorAmigo
+
+  override method invocarAnillo() {
+    super()
+
+    mejorAmigo.curarGuerrero(30)
+  }
+}
+
+object anilloUnico inherits Anillo (duenio = gollum) {
+
+  override method invocarAnillo() {
+    super()
+
+    duenio.recibirDanio(20)
+
+    if (duenio.cantidadDeArmas() <= 3)
+      duenio.recibirDanio(10)
+  }
+}
