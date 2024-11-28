@@ -1,6 +1,6 @@
 
 // No hice un calendario en el parcial para los new Date repetidos :
-// Resta puntos por dates repetidos seguramento ( -0.5 0 -1 Puntos)
+// Resta puntos por dates repetidos seguramente ( -0.5 0 -1 Puntos)
 object calendario { 
 
   method fechaActual() = new Date()
