@@ -1,6 +1,5 @@
 
 // No hice un calendario en el parcial para los new Date repetidos :
-// Resta puntos por dates repetidos seguramente ( -0.5 0 -1 Puntos)
 object calendario { 
 
   method fechaActual() = new Date()
@@ -10,7 +9,6 @@ object calendario {
 
   method semanaAnterior() = self.fechaActual().minusDays(7)
 }
-// Punto 1 (4 Puntos) : Mios (3 o 4) Ni idea la verdad :c
 class Noticia {
   const importancia 
   const property fechaPublicacion
@@ -27,7 +25,7 @@ class Noticia {
   method validadicionEscritura(){
     if(!self.cuantasPalabrasEnTitulo()>=2)
       throw new DomainException(message ="La noticia no tiene un buen titulo")
-      //En esta parte use la lista generada por palabras de desarrollo :C -0.5 o -1
+      //En el parcial no use isEmpty 
     if(self.desarrollo().isEmpty()){
       throw new DomainException(message ="Carece de desarrollo")
     }
@@ -57,7 +55,7 @@ class Noticia {
 
   method esChivo() = false 
 
-  // Esto no lo hice asi al no tener calendario hice 
+  // Esto no lo hice asi al no tener calendario 
   method esDeHoy() = fechaPublicacion == calendario.fechaActual()
 
   method esDeLaUltimaSemana() = fechaPublicacion == calendario.semanaAnterior()
@@ -92,7 +90,6 @@ class Cobertura {
   method esCopada()= noticias.all({noticia=>noticia.esCopada()})
 }
 
-// Punto 2 (3 puntos ) : mios (1.5 o 2 con suerte)
 class Periodista {
   var property preferencia = copado
   const fechaDeIngreso
@@ -103,7 +100,6 @@ class Periodista {
     noticiasPublicadas.add(noticia)
   }
 
-  //Punto 3 lo hice mas o menos
   method noticiasQueNoPrefiere() = noticiasPublicadas.filter({noticia=>self.eligePublicar(noticia)})
   method noticiasNoPreferidasDeHoy() = self.noticiasQueNoPrefiere().filter({noticia=>noticia.esDeHoy()}) 
 
@@ -129,19 +125,14 @@ object vago {
 }
 
 
-// MAL un string no entiende first :(
+//En el parcial use first() pero los strings no entienden first
 object joseDeZer inherits Periodista(fechaDeIngreso = new Date()) {
 
   override method eligePublicar(noticia) = noticia.titulo().startsWith("T")
 
 }
 
-// Punto 3 (3 Puntos) : Mios quizas unos (1.5 o 2 con suerte)
-
-// Punto 4 (2 Puntos) : Mios quizas (0 o 0.5 o 1 con suerte)
-
-//Mal No existe date().week() jasjja
-// Esto no lo hice asi seguramente este todo mal 
+//Durante el parcial no lo hice de esa forma 
 class Multimedio {
   const periodistas = []
 
